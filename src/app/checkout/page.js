@@ -19,6 +19,9 @@ export default function CheckoutPage() {
     e.preventDefault();
     setLoading(true);
 
+    // WooGraphQL validation-এর জন্য ফোন নম্বর ফিল্টার করে ইমেইল তৈরি
+    const cleanPhone = form.phone.replace(/[^0-9]/g, '');
+
     const payload = {
       billing: {
         firstName: form.firstName,
@@ -27,11 +30,12 @@ export default function CheckoutPage() {
         address1: form.address,
         city: form.city,
         country: 'BD',
-        email: `${form.phone || 'guest'}@example.com`, // WooGraphQL-এর জন্য ইমেইল আবশ্যক
+        email: `${cleanPhone || 'guest'}@example.com`,
       },
       lineItems: cart.map((item) => ({
-        productId: item.databaseId || item.id,
-        quantity: item.quantity,
+        // WooGraphQL mutation integer ID প্রত্যাশা করে
+        productId: parseInt(item.databaseId || item.id, 10),
+        quantity: parseInt(item.quantity, 10),
       })),
     };
 
@@ -77,7 +81,7 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Form */}
+        {/* Delivery Form */}
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-gray-200 space-y-4">
           <h2 className="text-lg font-bold text-gray-900">Delivery Information</h2>
           <div>
@@ -131,7 +135,7 @@ export default function CheckoutPage() {
           </button>
         </form>
 
-        {/* Summary */}
+        {/* Order Summary */}
         <div className="bg-gray-100 p-6 rounded-2xl border border-gray-200 h-fit space-y-4">
           <h2 className="text-lg font-bold text-gray-900">Order Summary</h2>
           <div className="space-y-3">
