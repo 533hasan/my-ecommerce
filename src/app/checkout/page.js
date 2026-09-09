@@ -33,19 +33,23 @@ export default function CheckoutPage() {
         email: `${cleanPhone || 'guest'}@example.com`,
       },
       lineItems: cart.map((item) => ({
-        // WooGraphQL mutation integer ID প্রত্যাশা করে
-        productId: parseInt(item.databaseId || item.id, 10),
-        quantity: parseInt(item.quantity, 10),
+        // WooGraphQL integer Database ID বা Product ID প্রত্যাশা করে
+        productId: Number(item.databaseId || item.id),
+        quantity: Number(item.quantity || 1),
       })),
     };
 
     try {
       const order = await createCodOrder(payload);
-      if (order) {
-        setOrderNumber(order.orderNumber || order.databaseId);
+      
+      // Response Structure হ্যান্ডলিং ( orderNumber / databaseId )
+      const resultOrderNumber = order?.orderNumber || order?.databaseId || order?.order?.orderNumber || order?.order?.databaseId;
+
+      if (resultOrderNumber) {
+        setOrderNumber(resultOrderNumber);
         clearCart();
       } else {
-        alert('Failed to place order. Response was empty.');
+        alert('Failed to place order. Invalid response received from server.');
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -62,8 +66,12 @@ export default function CheckoutPage() {
           ✓
         </div>
         <h1 className="text-2xl font-bold text-green-900">Order Placed Successfully!</h1>
-        <p className="text-gray-700">Order Number: <span className="font-bold">#{orderNumber}</span></p>
-        <p className="text-xs text-gray-500">We will call you shortly to confirm delivery details.</p>
+        <p className="text-gray-700">
+          Order Number: <span className="font-bold">#{orderNumber}</span>
+        </p>
+        <p className="text-xs text-gray-500">
+          We will call you shortly to confirm delivery details.
+        </p>
       </div>
     );
   }
@@ -141,7 +149,9 @@ export default function CheckoutPage() {
           <div className="space-y-3">
             {cart.map((item, index) => (
               <div key={item.id || index} className="flex justify-between text-sm">
-                <span>{item.name} × {item.quantity}</span>
+                <span>
+                  {item.name} × {item.quantity}
+                </span>
                 <span className="font-semibold">{item.price}</span>
               </div>
             ))}
